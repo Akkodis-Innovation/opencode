@@ -23,9 +23,9 @@ export const parseNewSessionDeepLink = (input: string) => {
   const url = parseUrl(input)
   if (!url) return
   if (url.hostname !== "new-session" && url.hostname !== "new") return
-  const directory = url.searchParams.get("directory") || url.searchParams.get("cwd")
+  const directory = url.searchParams.get("directory") ?? url.searchParams.get("cwd")
   if (!directory) return
-  const prompt = url.searchParams.get("prompt") || url.searchParams.get("q") || undefined
+  const prompt = url.searchParams.get("prompt") ?? url.searchParams.get("q") ?? undefined
   if (!prompt) return { directory }
   return { directory, prompt }
 }

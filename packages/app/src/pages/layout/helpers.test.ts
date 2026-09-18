@@ -117,6 +117,11 @@ describe("layout deep links", () => {
     })
   })
 
+  test("an empty directory or prompt still wins over its alias", () => {
+    expect(parseNewSessionDeepLink("opencode://new?directory=&cwd=/b")).toBeUndefined()
+    expect(parseNewSessionDeepLink("opencode://new?cwd=/b&prompt=&q=y")).toEqual({ directory: "/b" })
+  })
+
   test("ignores new deep links without a directory", () => {
     expect(parseNewSessionDeepLink("opencode://new")).toBeUndefined()
     expect(parseNewSessionDeepLink("opencode://new?q=hello")).toBeUndefined()
