@@ -91,6 +91,46 @@ describe("layout deep links", () => {
     expect(parseNewSessionDeepLink("opencode://new-session?directory=")).toBeUndefined()
   })
 
+  test("parses new deep links with cwd and q", () => {
+    expect(parseNewSessionDeepLink("opencode://new?cwd=/tmp/demo")).toEqual({ directory: "/tmp/demo" })
+    expect(parseNewSessionDeepLink("opencode://new?cwd=/tmp/demo&q=hello%20world")).toEqual({
+      directory: "/tmp/demo",
+      prompt: "hello world",
+    })
+  })
+
+  test("accepts the aliases on both hosts", () => {
+    expect(parseNewSessionDeepLink("opencode://new?directory=/tmp/demo&prompt=hi")).toEqual({
+      directory: "/tmp/demo",
+      prompt: "hi",
+    })
+    expect(parseNewSessionDeepLink("opencode://new-session?cwd=/tmp/demo&q=hi")).toEqual({
+      directory: "/tmp/demo",
+      prompt: "hi",
+    })
+  })
+
+  test("prefers directory and prompt when both spellings are given", () => {
+    expect(parseNewSessionDeepLink("opencode://new?directory=/a&cwd=/b&prompt=x&q=y")).toEqual({
+      directory: "/a",
+      prompt: "x",
+    })
+  })
+
+  test("ignores new deep links without a directory", () => {
+    expect(parseNewSessionDeepLink("opencode://new")).toBeUndefined()
+    expect(parseNewSessionDeepLink("opencode://new?q=hello")).toBeUndefined()
+  })
+
+  test("collects new-session deep links in both forms", () => {
+    const result = collectNewSessionDeepLinks([
+      "opencode://new-session?directory=/a",
+      "opencode://new?cwd=/b&q=ship%20it",
+      "opencode://open-project?directory=/c",
+    ])
+    expect(result).toEqual([{ directory: "/a" }, { directory: "/b", prompt: "ship it" }])
+  })
+
   test("collects only valid new-session deep links", () => {
     const result = collectNewSessionDeepLinks([
       "opencode://new-session?directory=/a",

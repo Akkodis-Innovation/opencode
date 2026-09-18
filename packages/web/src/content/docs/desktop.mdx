@@ -1,0 +1,50 @@
+---
+title: Desktop
+description: Using the OpenCode desktop app, including deep links.
+---
+
+The OpenCode desktop app is available in beta. Download it from [opencode.ai/download](https://opencode.ai/download) or the [releases page](https://github.com/anomalyco/opencode/releases).
+
+On macOS, install with Homebrew:
+
+```
+brew install --cask opencode-desktop
+```
+
+On Windows, install with Scoop:
+
+```
+scoop bucket add extras; scoop install extras/opencode-desktop
+```
+
+---
+
+## Deep links
+
+The desktop app registers the `opencode://` URL scheme, so a link from a browser, a terminal, or another app can open a project or start a session. Values must be URL-encoded: a space as `%20`, `&` as `%26`, and a literal `+` as `%2B`, because `+` in a query value otherwise decodes to a space.
+
+### Open a project
+
+```
+opencode://open-project?directory=/path/to/project
+```
+
+Opens the folder as a project.
+
+### Start a new session
+
+```
+opencode://new-session?directory=/path/to/project&prompt=fix%20the%20login%20bug
+```
+
+Or with the short form of the same link:
+
+```
+opencode://new?cwd=/path/to/project&q=fix%20the%20login%20bug
+```
+
+`cwd` and `q` are aliases of `directory` and `prompt` on both forms. If both are given, `directory` and `prompt` win.
+
+Opens the desktop app on the folder and pre-fills the prompt in the composer. The prompt is never sent automatically; review or edit it, then send as usual.
+
+Deep links only start sessions in local projects. Give an absolute path: a relative one resolves against the working directory the app process was started from, which is rarely what you want. If the app is not running yet, the link is handled as it starts up.
