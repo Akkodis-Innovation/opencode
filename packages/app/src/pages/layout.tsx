@@ -1163,6 +1163,22 @@ export default function LegacyLayout(props: ParentProps) {
     return root
   }
 
+  /**
+   * Land on a project when there is no specific session to show.
+   *
+   * The legacy shell routes this at `/:dir/session`, whose `:id` is optional. The new
+   * layout has no such route - its only `/:dir/...` route requires an id - so that href
+   * matches nothing there and the caller silently navigates nowhere. A new session under
+   * the new layout is a draft.
+   */
+  function navigateToProjectRoot(root: string) {
+    if (settings.general.newLayoutDesigns()) {
+      void tabs.newDraft({ server: server.key, directory: root })
+      return
+    }
+    navigateWithSidebarReset(`/${base64Encode(root)}/session`)
+  }
+
   async function navigateToProject(directory: string | undefined) {
     if (!directory) return
     const root = projectRoot(directory)
@@ -1239,15 +1255,7 @@ export default function LegacyLayout(props: ParentProps) {
       return
     }
 
-    if (settings.general.newLayoutDesigns()) {
-      // Nothing to open, so this is a new session - and the new layout has no
-      // `/:dir/session` route for one, so the href below would match nothing and the
-      // project would never appear. A new session here is a draft.
-      void tabs.newDraft({ server: server.key, directory: root })
-      return
-    }
-
-    navigateWithSidebarReset(`/${base64Encode(root)}/session`)
+    navigateToProjectRoot(root)
   }
 
   function navigateToSession(session: Session | undefined) {
@@ -1400,7 +1408,7 @@ export default function LegacyLayout(props: ParentProps) {
     const deletedKey = pathKey(directory)
     const shouldLeave = leaveDeletedWorkspace || (!!params.dir && currentKey === deletedKey)
     if (!leaveDeletedWorkspace && shouldLeave) {
-      navigateWithSidebarReset(`/${base64Encode(root)}/session`)
+      navigateToProjectRoot(root)
     }
 
     setBusy(directory, true)
@@ -1448,7 +1456,7 @@ export default function LegacyLayout(props: ParentProps) {
     const valid = dirs.some((item) => pathKey(item) === nextKey)
 
     if (params.dir && projectRoot(nextCurrent) === root && !valid) {
-      navigateWithSidebarReset(`/${base64Encode(root)}/session`)
+      navigateToProjectRoot(root)
     }
   }
 
