@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test"
+import { base64Encode } from "@opencode-ai/core/util/encode"
 import {
   collectNewSessionDeepLinks,
+  newSessionDeepLinkTarget,
   collectOpenProjectDeepLinks,
   drainPendingDeepLinks,
   parseDeepLink,
@@ -89,6 +91,30 @@ describe("layout deep links", () => {
   test("ignores new-session deep links without directory", () => {
     expect(parseNewSessionDeepLink("opencode://new-session")).toBeUndefined()
     expect(parseNewSessionDeepLink("opencode://new-session?directory=")).toBeUndefined()
+  })
+
+  test("targets a draft under the new layout, which is the only route it has", () => {
+    expect(newSessionDeepLinkTarget({ directory: "/tmp/demo", prompt: "fix it" }, true)).toEqual({
+      kind: "draft",
+      directory: "/tmp/demo",
+      prompt: "fix it",
+    })
+    expect(newSessionDeepLinkTarget({ directory: "/tmp/demo" }, true)).toEqual({
+      kind: "draft",
+      directory: "/tmp/demo",
+      prompt: undefined,
+    })
+  })
+
+  test("keeps the legacy href when the legacy shell is active", () => {
+    const withPrompt = newSessionDeepLinkTarget({ directory: "/tmp/demo", prompt: "fix it" }, false)
+    expect(withPrompt.kind).toBe("legacy")
+    if (withPrompt.kind !== "legacy") throw new Error("expected legacy")
+    expect(withPrompt.href).toBe(`/${base64Encode("/tmp/demo")}/session?prompt=fix%20it`)
+
+    const without = newSessionDeepLinkTarget({ directory: "/tmp/demo" }, false)
+    if (without.kind !== "legacy") throw new Error("expected legacy")
+    expect(without.href).toBe(`/${base64Encode("/tmp/demo")}/session`)
   })
 
   test("collects only valid new-session deep links", () => {

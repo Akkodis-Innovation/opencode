@@ -58,6 +58,7 @@ import { TabsInfoPopup } from "@/components/help-button"
 import { Titlebar, type TitlebarUpdate } from "@/components/titlebar"
 import { useDirectoryPicker } from "@/components/directory-picker"
 import { ServerConnection, useServer } from "@/context/server"
+import { useTabs } from "@/context/tabs"
 import { useLanguage, type Locale } from "@/context/language"
 import { pathKey } from "@/utils/path-key"
 import {
@@ -69,6 +70,7 @@ import {
 } from "./layout/helpers"
 import {
   collectNewSessionDeepLinks,
+  newSessionDeepLinkTarget,
   collectOpenProjectDeepLinks,
   deepLinkEvent,
   drainPendingDeepLinks,
@@ -113,6 +115,7 @@ export default function LegacyLayout(props: ParentProps) {
   const pickDirectory = useDirectoryPicker()
   const settings = useSettings()
   const server = useServer()
+  const tabs = useTabs()
   const notification = useNotification()
   const permission = usePermission()
   const navigate = useNavigate()
@@ -1258,14 +1261,19 @@ export default function LegacyLayout(props: ParentProps) {
 
     for (const link of collectNewSessionDeepLinks(urls)) {
       void openProject(link.directory, false)
-      const slug = base64Encode(link.directory)
-      if (link.prompt) {
-        setSessionHandoff(SessionStateKey.from(server.scope(), SessionRouteKey.fromLegacy(slug)), {
-          prompt: link.prompt,
+      const target = newSessionDeepLinkTarget(link, settings.general.newLayoutDesigns())
+      if (target.kind === "draft") {
+        // The new layout has no `/:dir/session` route, so the legacy href below matches
+        // nothing and the prompt is silently dropped. A new session here is a draft.
+        void tabs.newDraft({ server: server.key, directory: target.directory }, target.prompt)
+        continue
+      }
+      if (target.prompt) {
+        setSessionHandoff(SessionStateKey.from(server.scope(), SessionRouteKey.fromLegacy(target.slug)), {
+          prompt: target.prompt,
         })
       }
-      const href = link.prompt ? `/${slug}/session?prompt=${encodeURIComponent(link.prompt)}` : `/${slug}/session`
-      navigateWithSidebarReset(href)
+      navigateWithSidebarReset(target.href)
     }
   }
 

@@ -1,3 +1,4 @@
+import { base64Encode } from "@opencode-ai/core/util/encode"
 export const deepLinkEvent = "opencode:deep-link"
 
 const parseUrl = (input: string) => {
@@ -28,6 +29,29 @@ export const parseNewSessionDeepLink = (input: string) => {
   const prompt = url.searchParams.get("prompt") || undefined
   if (!prompt) return { directory }
   return { directory, prompt }
+}
+
+/**
+ * Where a new-session deep link should land.
+ *
+ * The legacy shell routes a session with no id at `/:dir/session`. The new layout
+ * has no such route - its only `/:dir/...` route requires an `:id` - and a new
+ * session there is a draft at `/new-session?draftId=...`. Sending the legacy href
+ * under the new layout matches nothing, so the app opens the project and then
+ * navigates nowhere: the window comes forward and the prompt is silently lost.
+ */
+export type NewSessionTarget =
+  | { kind: "draft"; directory: string; prompt?: string }
+  | { kind: "legacy"; slug: string; href: string; prompt?: string }
+
+export const newSessionDeepLinkTarget = (
+  link: { directory: string; prompt?: string },
+  newLayoutDesigns: boolean,
+): NewSessionTarget => {
+  if (newLayoutDesigns) return { kind: "draft", directory: link.directory, prompt: link.prompt }
+  const slug = base64Encode(link.directory)
+  const href = link.prompt ? `/${slug}/session?prompt=${encodeURIComponent(link.prompt)}` : `/${slug}/session`
+  return { kind: "legacy", slug, href, prompt: link.prompt }
 }
 
 export const collectOpenProjectDeepLinks = (urls: string[]) =>
