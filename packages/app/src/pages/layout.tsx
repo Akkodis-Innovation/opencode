@@ -1239,6 +1239,14 @@ export default function LegacyLayout(props: ParentProps) {
       return
     }
 
+    if (settings.general.newLayoutDesigns()) {
+      // Nothing to open, so this is a new session - and the new layout has no
+      // `/:dir/session` route for one, so the href below would match nothing and the
+      // project would never appear. A new session here is a draft.
+      void tabs.newDraft({ server: server.key, directory: root })
+      return
+    }
+
     navigateWithSidebarReset(`/${base64Encode(root)}/session`)
   }
 
